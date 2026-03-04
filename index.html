@@ -18,6 +18,7 @@
             min-height: 100vh;
             padding: 0;
             color: #333;
+            overflow-x: hidden;
         }
 
         .container {
@@ -170,39 +171,46 @@
             transform: scale(0.95);
         }
 
+        /* ===== カレンダー グリッド（はみ出し修正） ===== */
         .calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
+            gap: 4px;
             margin-bottom: 20px;
+            width: 100%;
         }
 
         .calendar-day {
-            aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 12px;
             font-weight: 600;
             background: #f8f9fa;
             color: #999;
+            padding: 6px 2px;
+            text-align: center;
+            min-width: 0;
         }
 
         .calendar-cell {
-            aspect-ratio: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 6px;
+            font-size: 13px;
             cursor: pointer;
             background: white;
-            border: 2px solid #e0e0e0;
-            transition: all 0.3s;
+            border: 1.5px solid #e0e0e0;
+            transition: all 0.2s;
             position: relative;
-            min-height: 50px;
+            min-height: 44px;
+            padding: 4px 2px;
+            min-width: 0;
+            word-break: break-all;
+            overflow: hidden;
         }
 
         .calendar-cell:active {
@@ -228,17 +236,26 @@
             color: #3498db;
         }
 
+        .calendar-cell.selected.sunday,
+        .calendar-cell.selected.saturday {
+            color: white;
+        }
+
         .calendar-cell.disabled {
             background: #f5f5f5;
             color: #ccc;
             cursor: not-allowed;
+            border-color: #f0f0f0;
         }
 
         .calendar-cell .names {
-            font-size: 10px;
-            margin-top: 4px;
+            font-size: 9px;
+            margin-top: 2px;
             text-align: center;
             line-height: 1.2;
+            white-space: pre-line;
+            overflow: hidden;
+            max-width: 100%;
         }
 
         .calendar-cell.overlap-2 {
@@ -249,6 +266,39 @@
         .calendar-cell.overlap-3 {
             background: linear-gradient(135deg, #ffe0b2 0%, #ffb74d 100%);
             border-color: #ff9800;
+        }
+
+        /* スマホ専用調整 */
+        @media (max-width: 480px) {
+            .card {
+                margin: 10px;
+                padding: 14px;
+            }
+
+            .calendar {
+                gap: 3px;
+            }
+
+            .calendar-day {
+                font-size: 11px;
+                padding: 5px 1px;
+            }
+
+            .calendar-cell {
+                font-size: 12px;
+                min-height: 40px;
+                padding: 3px 1px;
+            }
+
+            .calendar-cell .names {
+                font-size: 8px;
+            }
+
+            .calendar-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
         }
 
         /* ボタン */
@@ -305,23 +355,25 @@
             position: fixed;
             top: 20px;
             right: 20px;
+            left: 20px;
             padding: 16px 24px;
             background: #4caf50;
             color: white;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 1000;
+            text-align: center;
             animation: slideIn 0.3s, slideOut 0.3s 2.7s;
         }
 
         @keyframes slideIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from { transform: translateY(-60px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(400px); opacity: 0; }
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(-60px); opacity: 0; }
         }
 
         .toast.error {
@@ -394,6 +446,7 @@
         /* 忍者AdMax広告枠 */
         #ninja-admax-area {
             margin-top: 20px;
+            margin-bottom: 20px;
             padding: 10px;
             text-align: center;
             min-height: 60px;
@@ -422,7 +475,7 @@
             opacity: 0.8;
         }
 
-        /* レスポンシブ */
+        /* タブレット以上 */
         @media (min-width: 768px) {
             header h1 {
                 font-size: 32px;
@@ -435,6 +488,18 @@
             .card {
                 margin: 24px;
                 padding: 30px;
+            }
+
+            .calendar {
+                gap: 6px;
+            }
+
+            .calendar-day {
+                font-size: 13px;
+            }
+
+            .calendar-cell {
+                font-size: 15px;
             }
         }
 
@@ -459,7 +524,7 @@
 
         <!-- 入力タブ -->
         <div id="input-tab" class="tab-content active">
-            <div class="card">
+            <div class="card" id="input-card">
                 <h2>希望休みを入力</h2>
                 <div class="form-group">
                     <label for="name">あなたの名前</label>
@@ -484,23 +549,23 @@
                 <div class="success-icon">✅</div>
                 <h2>提出完了！</h2>
                 <p>希望休みを提出しました。<br>「一覧・集計」タブで確認できます。</p>
-                
+
                 <!-- ========================================
                      忍者AdMax 広告コード ここから
                      ※ 忍者AdMax登録後、下記の#ninja-admax-area内に
                         発行された広告コードを貼り付けてください
-                     
+
                      【貼り付け手順】
                      1. 忍者AdMax管理画面で広告枠を作成（320×50推奨）
                      2. 発行された広告コードをコピー
-                     3. 下記の<!-- ここに広告コードを貼り付け -->部分に貼り付け
-                     4. 保存して公開
+                     3. 下記の「ここに広告コードを貼り付け」部分に貼り付け
+                     4. 保存してGitHubに再アップロード
                      ======================================== -->
                 <div id="ninja-admax-area">
                     <!-- ここに広告コードを貼り付け -->
                 </div>
                 <!-- 忍者AdMax 広告コード ここまで -->
-                
+
                 <button class="btn" onclick="location.reload()">戻る</button>
             </div>
 
@@ -514,7 +579,7 @@
         <div id="list-tab" class="tab-content">
             <div class="card">
                 <h2>全員の休み希望一覧</h2>
-                
+
                 <div class="calendar-header">
                     <h3 id="list-month"></h3>
                     <div class="month-nav">
@@ -549,25 +614,20 @@
     </div>
 
     <script>
-        // データ管理
         const DATA_KEY = 'shift_calendar_data';
         let currentDate = new Date();
         let listDate = new Date();
         let selectedDates = new Set();
-        let currentName = '';
 
-        // データ取得
         function getData() {
             const data = localStorage.getItem(DATA_KEY);
             return data ? JSON.parse(data) : [];
         }
 
-        // データ保存
         function saveData(data) {
             localStorage.setItem(DATA_KEY, JSON.stringify(data));
         }
 
-        // トースト表示
         function showToast(message, isError = false) {
             const toast = document.createElement('div');
             toast.className = `toast ${isError ? 'error' : ''}`;
@@ -576,22 +636,20 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // カレンダー描画（入力用）
         function renderCalendar() {
             const calendar = document.getElementById('calendar');
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            
-            document.getElementById('current-month').textContent = 
+
+            document.getElementById('current-month').textContent =
                 `${year}年${month + 1}月`;
 
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const startDay = firstDay.getDay();
-            
+
             calendar.innerHTML = '';
-            
-            // 曜日ヘッダー
+
             ['日', '月', '火', '水', '木', '金', '土'].forEach((day, i) => {
                 const dayEl = document.createElement('div');
                 dayEl.className = 'calendar-day';
@@ -601,26 +659,24 @@
                 calendar.appendChild(dayEl);
             });
 
-            // 空白セル
             for (let i = 0; i < startDay; i++) {
                 const emptyCell = document.createElement('div');
                 emptyCell.className = 'calendar-cell disabled';
                 calendar.appendChild(emptyCell);
             }
 
-            // 日付セル
             for (let date = 1; date <= lastDay.getDate(); date++) {
                 const cell = document.createElement('div');
                 const dayOfWeek = new Date(year, month, date).getDay();
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-                
+
                 cell.className = 'calendar-cell selectable';
                 if (dayOfWeek === 0) cell.classList.add('sunday');
                 if (dayOfWeek === 6) cell.classList.add('saturday');
                 if (selectedDates.has(dateStr)) cell.classList.add('selected');
-                
+
                 cell.textContent = date;
-                
+
                 cell.addEventListener('click', () => {
                     if (selectedDates.has(dateStr)) {
                         selectedDates.delete(dateStr);
@@ -630,27 +686,25 @@
                         cell.classList.add('selected');
                     }
                 });
-                
+
                 calendar.appendChild(cell);
             }
         }
 
-        // カレンダー描画（一覧用）
         function renderListCalendar() {
             const calendar = document.getElementById('list-calendar');
             const year = listDate.getFullYear();
             const month = listDate.getMonth();
-            
-            document.getElementById('list-month').textContent = 
+
+            document.getElementById('list-month').textContent =
                 `${year}年${month + 1}月`;
 
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const startDay = firstDay.getDay();
-            
+
             calendar.innerHTML = '';
-            
-            // 曜日ヘッダー
+
             ['日', '月', '火', '水', '木', '金', '土'].forEach((day, i) => {
                 const dayEl = document.createElement('div');
                 dayEl.className = 'calendar-day';
@@ -660,7 +714,6 @@
                 calendar.appendChild(dayEl);
             });
 
-            // 空白セル
             for (let i = 0; i < startDay; i++) {
                 const emptyCell = document.createElement('div');
                 emptyCell.className = 'calendar-cell disabled';
@@ -669,53 +722,50 @@
 
             const data = getData();
 
-            // 日付セル
             for (let date = 1; date <= lastDay.getDate(); date++) {
                 const cell = document.createElement('div');
                 const dayOfWeek = new Date(year, month, date).getDay();
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-                
+
                 cell.className = 'calendar-cell';
                 if (dayOfWeek === 0) cell.classList.add('sunday');
                 if (dayOfWeek === 6) cell.classList.add('saturday');
-                
-                // この日に休む人を検索
+
                 const names = data
                     .filter(item => item.dates.includes(dateStr))
                     .map(item => item.name);
-                
+
                 const dateDiv = document.createElement('div');
                 dateDiv.textContent = date;
                 cell.appendChild(dateDiv);
-                
+
                 if (names.length > 0) {
                     const namesDiv = document.createElement('div');
                     namesDiv.className = 'names';
-                    
+
                     if (names.length <= 3) {
                         namesDiv.textContent = names.join('\n');
                     } else {
                         namesDiv.textContent = names.slice(0, 2).join('\n') + `\n+${names.length - 2}人`;
                     }
-                    
+
                     cell.appendChild(namesDiv);
-                    
+
                     if (names.length === 2) {
                         cell.classList.add('overlap-2');
                     } else if (names.length >= 3) {
                         cell.classList.add('overlap-3');
                     }
                 }
-                
+
                 calendar.appendChild(cell);
             }
         }
 
-        // 自分の提出履歴表示
         function renderMySubmissions() {
             const name = document.getElementById('name').value.trim();
             const listDiv = document.getElementById('my-list');
-            
+
             if (!name) {
                 listDiv.innerHTML = '<p style="color: #999;">名前を入力すると履歴が表示されます</p>';
                 return;
@@ -723,7 +773,7 @@
 
             const data = getData();
             const myData = data.filter(item => item.name === name);
-            
+
             if (myData.length === 0) {
                 listDiv.innerHTML = '<p style="color: #999;">提出済みの希望はありません</p>';
                 return;
@@ -737,40 +787,37 @@
             `).join('');
         }
 
-        // 提出削除
         window.deleteSubmission = function(index) {
             const name = document.getElementById('name').value.trim();
             if (!confirm('この提出を削除しますか？')) return;
-            
+
             const data = getData();
             const myData = data.filter(item => item.name === name);
             const targetId = myData[index].id;
-            
+
             const newData = data.filter(item => item.id !== targetId);
             saveData(newData);
-            
+
             renderMySubmissions();
             showToast('削除しました');
         };
 
-        // タブ切り替え
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const targetTab = tab.dataset.tab;
-                
+
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
+
                 tab.classList.add('active');
                 document.getElementById(`${targetTab}-tab`).classList.add('active');
-                
+
                 if (targetTab === 'list') {
                     renderListCalendar();
                 }
             });
         });
 
-        // 月切り替え
         document.getElementById('prev-month').addEventListener('click', () => {
             currentDate.setMonth(currentDate.getMonth() - 1);
             selectedDates.clear();
@@ -793,15 +840,14 @@
             renderListCalendar();
         });
 
-        // 提出処理
         document.getElementById('submit-btn').addEventListener('click', () => {
             const name = document.getElementById('name').value.trim();
-            
+
             if (!name) {
                 showToast('名前を入力してください', true);
                 return;
             }
-            
+
             if (selectedDates.size === 0) {
                 showToast('希望日を選択してください', true);
                 return;
@@ -814,21 +860,18 @@
                 dates: Array.from(selectedDates).sort(),
                 timestamp: new Date().toISOString()
             });
-            
+
             saveData(data);
-            
-            // 提出完了画面表示
-            document.querySelector('.card:first-child').style.display = 'none';
-            document.querySelector('.submitted-list').style.display = 'none';
+
+            document.getElementById('input-card').style.display = 'none';
+            document.getElementById('my-submissions').style.display = 'none';
             document.getElementById('success-screen').classList.add('show');
-            
+
             selectedDates.clear();
         });
 
-        // 名前入力時に履歴更新
         document.getElementById('name').addEventListener('input', renderMySubmissions);
 
-        // リセット処理
         document.getElementById('reset-btn').addEventListener('click', () => {
             const password = prompt('管理者パスワードを入力してください:');
             if (password === '1234') {
@@ -842,7 +885,6 @@
             }
         });
 
-        // 初期化
         renderCalendar();
         renderMySubmissions();
     </script>
